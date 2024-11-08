@@ -1,4 +1,4 @@
-"use client";
+
 
 import { useEffect, useRef, useState } from 'react';
 
@@ -24,29 +24,40 @@ const Globe = () => {
     const gap = 22;
     const radius = (Math.min(canvas.width, canvas.height) / 2 - 100) * 2;
 
-    // Function to draw ellipse (dots)
-    const drawEllipse = (x, y, rx, ry, color = 'rgba(255, 255, 255, 0.8)', shadow = '') => {
-      ctx.beginPath();
-      ctx.ellipse(x, y, rx, ry, 0, 0, 2 * Math.PI);
-      ctx.fillStyle = color; // Set the color of the dot
-      ctx.shadowBlur = shadow ? 20 : 0; // Increase the shadow for more glow effect
-      ctx.shadowColor = shadow ? 'rgba(255, 255, 255, 0.8)' : 'transparent'; // Set the shadow color (for the glow effect)
-      ctx.fill();
-    };
+   // Function to draw ellipse (dots)
+const drawEllipse = (x, y, rx, ry, color = 'rgba(255, 255, 255, 0.8)', shadow = '') => {
+  ctx.beginPath();
+  ctx.ellipse(x, y, rx, ry, 0, 0, 2 * Math.PI);
+  ctx.fillStyle = color; // Set the color of the dot
+  ctx.shadowBlur = shadow ? 20 : 0; // Increase the shadow for more glow effect
+  ctx.shadowColor = shadow ? 'rgba(255, 255, 255, 0.8)' : 'transparent'; // Set the shadow color (for the glow effect)
+  ctx.fill();
+};
+
 
     // Function to simulate the wavy, rippling effect on the globe
-    const drawRipplingEffect = (x, y, distanceFromCenter) => {
-      const oscillationSpeed = 0.0000000000000000000000001; // Slow down the oscillation speed for a more relaxed effect
-      rippleOffsetRef.current += oscillationSpeed;
-      const rippleStrength = 5 + (Math.sin(rippleOffsetRef.current) * 5 + 5); // Range between 5 and 15
-      const rippleFrequency = 0.2 + (Math.sin(rippleOffsetRef.current) * 0.001 + 0.05); // Range between 0.2 and 0.5
-      const wave = Math.sin(rippleOffsetRef.current + distanceFromCenter * rippleFrequency) * rippleStrength;
-      return wave;
-    };
+const drawRipplingEffect = (x, y, distanceFromCenter) => {
+  // Set oscillation speed for smooth transition between values (slower)
+  const oscillationSpeed = 0.0000000000000000000000001; // Slow down the oscillation speed for a more relaxed effect
 
-    // Handle mouse move and touch move
-    const handleMove = (event) => {
-      const { clientX, clientY } = event.touches ? event.touches[0] : event; // Use the first touch point
+  // Update rippleOffsetRef for continuous, smooth oscillation
+  rippleOffsetRef.current += oscillationSpeed;
+
+  // Oscillate rippleStrength between 5 and 15 (so it's more subtle)
+  const rippleStrength = 5 + (Math.sin(rippleOffsetRef.current) * 5 + 5); // Range between 5 and 15
+  
+  // Oscillate rippleFrequency between 0.2 and 0.5 (so it doesn't oscillate too rapidly)
+  const rippleFrequency = 0.2 + (Math.sin(rippleOffsetRef.current) * 0.001 + 0.05); // Range between 0.2 and 0.5
+  
+  // Calculate the wave effect using the oscillated values
+  const wave = Math.sin(rippleOffsetRef.current + distanceFromCenter * rippleFrequency) * rippleStrength;
+  return wave;
+};
+
+
+    // Handle mouse movement
+    const handleMouseMove = (event) => {
+      const { clientX, clientY } = event;
       setMousePosition({ x: clientX, y: clientY });
     };
 
@@ -61,6 +72,8 @@ const Globe = () => {
       for (let y = -radius; y <= radius; y += gap) {
         const latitudeFactor = (y + radius) / (2 * radius);
         const distanceFromEquator = Math.abs(0.5 - latitudeFactor);
+
+        // Cascading spread effect
         const spreadEffect = scrollFactor * (1 - distanceFromEquator) ** 3 * 800;
         const verticalEffect = scrollFactor * (1 - latitudeFactor) ** 3 * 600;
 
@@ -72,6 +85,7 @@ const Globe = () => {
           // Calculate the distance from the center
           const centerDistance = Math.sqrt(x * x + y * y);
           const centerSpreadFactor = Math.pow(1 - centerDistance / radius, 1);
+
           let adjustedSpreadEffect = spreadEffect * centerSpreadFactor;
           let adjustedVerticalEffect = verticalEffect * centerSpreadFactor;
 
@@ -116,7 +130,9 @@ const Globe = () => {
       scrollYRef.current -= velocityRef.current;
       if (Math.abs(velocityRef.current) < 0.01) velocityRef.current = 0;
       velocityRef.current *= 0.95;
+
       rippleOffsetRef.current += 0.008;
+
       drawGlobe();
       animationRef.current = requestAnimationFrame(animate);
     };
@@ -131,8 +147,7 @@ const Globe = () => {
     };
 
     window.addEventListener('resize', handleResize);
-    window.addEventListener('mousemove', handleMove);
-    window.addEventListener('touchmove', handleMove, { passive: true });
+    window.addEventListener('mousemove', handleMouseMove);
 
     const handleWheel = (event) => {
       velocityRef.current -= event.deltaY * 0.5;
@@ -143,11 +158,10 @@ const Globe = () => {
     return () => {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('wheel', handleWheel);
-      window.removeEventListener('mousemove', handleMove);
-      window.removeEventListener('touchmove', handleMove);
+      window.removeEventListener('mousemove', handleMouseMove);
       cancelAnimationFrame(animationRef.current);
     };
-  }, [mousePosition]);
+  }, [mousePosition]); // Re-run animation when mouse position changes
 
   return (
     <div>
