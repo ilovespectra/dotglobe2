@@ -1,5 +1,3 @@
-
-
 import { useEffect, useRef, useState } from 'react';
 
 const Globe = () => {
@@ -24,41 +22,35 @@ const Globe = () => {
     const gap = 22;
     const radius = (Math.min(canvas.width, canvas.height) / 2 - 100) * 2;
 
-   // Function to draw ellipse (dots)
-const drawEllipse = (x, y, rx, ry, color = 'rgba(255, 255, 255, 0.8)', shadow = '') => {
-  ctx.beginPath();
-  ctx.ellipse(x, y, rx, ry, 0, 0, 2 * Math.PI);
-  ctx.fillStyle = color; // Set the color of the dot
-  ctx.shadowBlur = shadow ? 20 : 0; // Increase the shadow for more glow effect
-  ctx.shadowColor = shadow ? 'rgba(255, 255, 255, 0.8)' : 'transparent'; // Set the shadow color (for the glow effect)
-  ctx.fill();
-};
-
+    // Function to draw ellipse (dots)
+    const drawEllipse = (x, y, rx, ry, color = 'rgba(255, 255, 255, 0.8)', shadow = '') => {
+      ctx.beginPath();
+      ctx.ellipse(x, y, rx, ry, 0, 0, 2 * Math.PI);
+      ctx.fillStyle = color; // Set the color of the dot
+      ctx.shadowBlur = shadow ? 20 : 0; // Increase the shadow for more glow effect
+      ctx.shadowColor = shadow ? 'rgba(255, 255, 255, 0.8)' : 'transparent'; // Set the shadow color (for the glow effect)
+      ctx.fill();
+    };
 
     // Function to simulate the wavy, rippling effect on the globe
-const drawRipplingEffect = (x, y, distanceFromCenter) => {
-  // Set oscillation speed for smooth transition between values (slower)
-  const oscillationSpeed = 0.0000000000000000000000001; // Slow down the oscillation speed for a more relaxed effect
-
-  // Update rippleOffsetRef for continuous, smooth oscillation
-  rippleOffsetRef.current += oscillationSpeed;
-
-  // Oscillate rippleStrength between 5 and 15 (so it's more subtle)
-  const rippleStrength = 5 + (Math.sin(rippleOffsetRef.current) * 5 + 5); // Range between 5 and 15
-  
-  // Oscillate rippleFrequency between 0.2 and 0.5 (so it doesn't oscillate too rapidly)
-  const rippleFrequency = 0.2 + (Math.sin(rippleOffsetRef.current) * 0.001 + 0.05); // Range between 0.2 and 0.5
-  
-  // Calculate the wave effect using the oscillated values
-  const wave = Math.sin(rippleOffsetRef.current + distanceFromCenter * rippleFrequency) * rippleStrength;
-  return wave;
-};
-
+    const drawRipplingEffect = (x, y, distanceFromCenter) => {
+      const oscillationSpeed = 0.0000000000000000000000001; // Slow down the oscillation speed for a more relaxed effect
+      rippleOffsetRef.current += oscillationSpeed;
+      const rippleStrength = 5 + (Math.sin(rippleOffsetRef.current) * 5 + 5); // Range between 5 and 15
+      const rippleFrequency = 0.2 + (Math.sin(rippleOffsetRef.current) * 0.001 + 0.05); // Range between 0.2 and 0.5
+      const wave = Math.sin(rippleOffsetRef.current + distanceFromCenter * rippleFrequency) * rippleStrength;
+      return wave;
+    };
 
     // Handle mouse movement
     const handleMouseMove = (event) => {
       const { clientX, clientY } = event;
       setMousePosition({ x: clientX, y: clientY });
+    };
+
+    // Handle mouse leaving the canvas
+    const handleMouseLeave = () => {
+      setMousePosition({ x: 0, y: 0 }); // Reset mouse position when it leaves the window
     };
 
     // Function to draw the globe and apply gravity to dots based on mouse position
@@ -106,9 +98,11 @@ const drawRipplingEffect = (x, y, distanceFromCenter) => {
           const dx = mousePosition.x - dotX;
           const dy = mousePosition.y - dotY;
           const distanceToMouse = Math.sqrt(dx * dx + dy * dy);
-          
+
           // Apply gravity effect (closer dots get pulled more)
-          const gravityEffect = Math.min(30 / distanceToMouse, 0.2); // Max pull effect
+          const gravityEffect = mousePosition.x === 0 && mousePosition.y === 0
+            ? 0 // No gravity when the mouse is outside
+            : Math.min(30 / distanceToMouse, 0.2); // Max pull effect
 
           dotX += gravityEffect * dx; // Pull the dot in the x direction
           dotY += gravityEffect * dy; // Pull the dot in the y direction
@@ -148,6 +142,7 @@ const drawRipplingEffect = (x, y, distanceFromCenter) => {
 
     window.addEventListener('resize', handleResize);
     window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseleave', handleMouseLeave); // Add mouse leave event
 
     const handleWheel = (event) => {
       velocityRef.current -= event.deltaY * 0.5;
@@ -159,6 +154,7 @@ const drawRipplingEffect = (x, y, distanceFromCenter) => {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('wheel', handleWheel);
       window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseleave', handleMouseLeave); // Clean up mouse leave event
       cancelAnimationFrame(animationRef.current);
     };
   }, [mousePosition]); // Re-run animation when mouse position changes
